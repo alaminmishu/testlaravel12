@@ -12,7 +12,7 @@ class NoteInfolist
     {
         return $schema
             ->components([
-                TextEntry::make('title'),
+//                TextEntry::make('title'),
                 TextEntry::make('content'),
                 IconEntry::make('active')
                     ->boolean(),

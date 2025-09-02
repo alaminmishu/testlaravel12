@@ -23,7 +23,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .cursor/
-.env
 .github/
 .junie/
 .mcp.json
