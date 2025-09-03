@@ -12,7 +12,8 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "leandrocfe/filament-apex-charts": "^4.0",
-        "pxlrbt/filament-excel": "^3.1"
+        "pxlrbt/filament-excel": "^3.1",
+        "stephenjude/filament-debugger": "^4.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
