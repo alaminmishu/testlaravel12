@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Notes\Pages;
 
 use App\Filament\Resources\Notes\NoteResource;
+use App\Filament\Widgets\NotesStatusChart;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,13 @@ class ListNotes extends ListRecords
     {
         return [
             CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            NotesStatusChart::class,
         ];
     }
     public function getTabs(): array
