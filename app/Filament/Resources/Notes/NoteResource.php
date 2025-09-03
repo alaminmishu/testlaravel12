@@ -11,10 +11,15 @@ use App\Filament\Resources\Notes\Schemas\NoteInfolist;
 use App\Filament\Resources\Notes\Tables\NotesTable;
 use App\Models\Note;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class NoteResource extends Resource
 {
@@ -36,7 +41,44 @@ class NoteResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return NotesTable::configure($table);
+        return NotesTable::configure($table)
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    // Basic Excel Export
+                    ExportBulkAction::make()
+                        ->label('Export to Excel')
+                        ->color('success'),
+
+                    // Custom Excel Export with specific columns
+                    ExportBulkAction::make('export_detailed')
+                        ->label('Export Detailed Report')
+                        ->color('primary')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename(fn () => 'notes-report-' . date('Y-m-d'))
+                                ->withWriterType(\Maatwebsite\Excel\Excel::XLSX)
+                                ->withColumns([
+                                    Column::make('id')
+                                        ->heading('ID'),
+                                    Column::make('title')
+                                        ->heading('Note Title'),
+                                    Column::make('content')
+                                        ->heading('Content'),
+                                    Column::make('active')
+                                        ->heading('Status')
+                                        ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Inactive'),
+                                    Column::make('created_at')
+                                        ->heading('Created Date')
+                                        ->formatStateUsing(fn ($state) => $state?->format('Y-m-d H:i:s')),
+                                    Column::make('updated_at')
+                                        ->heading('Updated Date')
+                                        ->formatStateUsing(fn ($state) => $state?->format('Y-m-d H:i:s')),
+                                ])
+                        ]),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array
