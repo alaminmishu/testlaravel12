@@ -13,6 +13,7 @@
         "laravel/pulse": "^1.4",
         "laravel/tinker": "^2.10.1",
         "leandrocfe/filament-apex-charts": "^4.0",
+        "malzariey/filament-daterangepicker-filter": "^4.0",
         "pxlrbt/filament-excel": "^3.1",
         "stephenjude/filament-debugger": "^4.1"
     },

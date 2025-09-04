@@ -29,6 +29,12 @@ class NoteResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    // Add navigation badge to show total count
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return NoteForm::configure($schema);
@@ -45,6 +51,7 @@ class NoteResource extends Resource
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+
                     // Basic Excel Export
                     ExportBulkAction::make()
                         ->label('Export to Excel')
@@ -77,6 +84,17 @@ class NoteResource extends Resource
                                         ->formatStateUsing(fn ($state) => $state?->format('Y-m-d H:i:s')),
                                 ])
                         ]),
+
+                    // Export filtered results only
+                    ExportBulkAction::make('export_filtered')
+                        ->label('Export Filtered Results')
+                        ->color('warning')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->only(['title', 'content', 'active', 'created_at'])
+                                ->withFilename(fn () => 'filtered-notes-' . date('Y-m-d-H-i'))
+                        ]),
                 ]),
             ]);
     }
@@ -96,5 +114,11 @@ class NoteResource extends Resource
             'view' => ViewNote::route('/{record}'),
             'edit' => EditNote::route('/{record}/edit'),
         ];
+    }
+
+    // Add global search capability
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'content'];
     }
 }
