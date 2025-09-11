@@ -50,16 +50,84 @@ class SyncOrdersJob implements ShouldQueue
             payment {
               type
               status
+              emi {
+                bankName
+                cardType
+                month
+              }
             }
             createdAt
             updatedAt
+            products {
+              enName
+              model
+              variant {
+                colorFamily
+                quantity
+                mrpPrice
+                size
+                posItemCode
+              }
+              seller {
+                enName
+              }
+              discount {
+                amount
+                type
+                calculatedDiscount
+              }
+            }
+            shippingMethod
             price {
               total
+              rewardPointDiscount {
+                discountAmount
+                redeemPoint
+              }
+              deliveryDiscountAmount
+              earnRewardPoint
+              discountedAmount
+              customerPayable
+              subTotal
+              vat
             }
             customer {
               contact {
                 email
               }
+            }
+            receiver {
+              addressLabel
+              address
+              area {
+                enName
+              }
+              name
+              phoneNumber
+              zone {
+                enName
+              }
+            }
+            billingAddress {
+              address
+              addressLabel
+              area {
+                enName
+              }
+              name
+              phoneNumber
+              zone {
+                enName
+              }
+            }
+            promocodeDetails {
+              code
+              discount
+              discountType
+            }
+            shippingCharges {
+              deliveryDiscountAmount
+              payableShippingCharge
             }
           }
         }
@@ -106,11 +174,11 @@ class SyncOrdersJob implements ShouldQueue
             $total = $total ?? data_get($json, 'data.getOrders.result.count');
 
             foreach ($orders as $node) {
-                \App\Models\Order::updateOrCreate(
+                $order = \App\Models\Order::updateOrCreate(
                     ['uid' => $node['uid'], 'environment' => $this->env],
                     [
                         'status' => $node['status'] ?? null,
-                        'payment_method' => data_get($node, 'payment.gateway'),
+                        'payment_method' => data_get($node, 'payment.type'),
                         'payment_status' => data_get($node, 'payment.status'),
                         'created_at_external' => data_get($node, 'createdAt'),
                         'updated_at_external' => data_get($node, 'updatedAt'),
