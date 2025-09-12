@@ -48,8 +48,10 @@ class SyncOrdersJob implements ShouldQueue
             uid
             status
             payment {
-              type
+              gateway
+              paymentGatewayCode
               status
+              transactionId
               emi {
                 bankName
                 cardType
@@ -69,6 +71,7 @@ class SyncOrdersJob implements ShouldQueue
                 posItemCode
               }
               seller {
+                uid
                 enName
               }
               discount {

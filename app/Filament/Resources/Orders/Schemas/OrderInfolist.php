@@ -66,28 +66,32 @@ class OrderInfolist
             default => 'gray',
         };
         $dateText       = $fmt($r->created_at_external ?? ($raw['createdAt'] ?? null));
-        $paymentText    = trim(($r->payment_method ?? ($raw['payment']['type'] ?? '—')) . (isset($r->payment_status) ? ' · ' . $r->payment_status : (isset($raw['payment']['status']) ? ' · ' . $raw['payment']['status'] : '')));
+        $paymentText    = trim(($r->payment_method ?? ($raw['payment']['paymentGatewayCode'] ?? '—')) . (isset($r->payment_status) ? ' · ' . $r->payment_status : (isset($raw['payment']['status']) ? ' · ' . $raw['payment']['status'] : '')));
+        $paymentTxn    = trim(($r->payment_method ?? ($raw['payment']['transactionId'] ?? '—')));
+        $emiInfo    = trim(($r->payment_method ?? ($raw['payment']['emi']['bankName'] . ' - ' . $raw['payment']['emi']['cardType'] . ' - ' . $raw['payment']['emi']['month'] ?? '—')));
         $shippingMethod = (string) ($raw['shippingMethod'] ?? '—');
-        $payableShown   = $raw['price']['customerPayable'] ?? $raw['price']['total'] ?? $r->total_amount;
+        $payableShown   = $raw['price']['customerPayable'] ?? '-';
         $payableText    = $money($payableShown, $r->currency);
 
         // --- items (from raw), capped for safety ---
         $items = [];
         $products = is_array($raw['products'] ?? null) ? $raw['products'] : [];
-        foreach (array_slice($products, 0, 30) as $p) {
+        foreach (array_slice($products, 0, 100) as $p) {
             $qty   = (int)  ($p['variant']['quantity'] ?? 1);
-//            $mrpN  = (float)($p['variant']['mrpPrice'] ?? 0);
-//            $discN = (float)($p['discount']['calculatedDiscount'] ?? $p['discount']['amount'] ?? 0);
-//            $lineN = ($qty * $mrpN) - abs($discN);
+            $mrpN  = (float)($p['variant']['mrpPrice'] ?? 0);
+            $discN = (float)($p['discount']['calculatedDiscount'] ?? 0);
+            $lineN = ($qty * $mrpN) - abs($discN);
 
             $items[] = [
                 'product'  => (string)($p['enName'] ?? '—'),
-                'model'    => (string)($p['model']  ?? '—'),
-                'plaza'    => (string)($p['seller']['enName'] ?? '—'),
+//                'model'    => (string)($p['model']  ?? '—'),
+                'plaza' => str_replace('Walton Plaza-', '', (string)($p['seller']['enName'] ?? '—')),
+//                'plaza'    => (string)($p['seller']['enName'] ?? '—'),
+                'plaza_uid'    => (string)($p['seller']['uid'] ?? '—'),
                 'qty'      => (string) $qty,
-//                'mrp'      => $money($mrpN, $r->currency),
-//                'discount' => $discN ? ('-' . $money(abs($discN), $r->currency)) : '—',
-//                'total'    => $money($lineN, $r->currency),
+                'mrp'      => $money($mrpN, $r->currency),
+                'discount' => $discN ? ('-' . $money(abs($discN), $r->currency)) : '—',
+                'total'    => $money($lineN, $r->currency),
             ];
         }
 
@@ -97,8 +101,10 @@ class OrderInfolist
             $shipCharge += (float) ($sc['payableShippingCharge'] ?? 0);
         }
         $summary = [
-            ['k' => 'UID',      'v' => $uid],
-            ['k' => 'Payment',  'v' => $paymentText ?: '—'],
+//            ['k' => 'UID',      'v' => $uid],
+//            ['k' => 'Payment',  'v' => $paymentText ?: '—'],
+            ['k' => 'Payment Txn',  'v' => $paymentTxn ?: '—'],
+            ['k' => 'Emi Info',  'v' => $emiInfo ?: '—'],
             ['k' => 'Shipping', 'v' => $shippingMethod],
             ['k' => 'Promo',    'v' => (string) ($raw['promocodeDetails']['code'] ?? '—')],
             ['k' => 'Subtotal', 'v' => $money($raw['price']['subTotal'] ?? null, $r->currency)],
@@ -106,12 +112,34 @@ class OrderInfolist
             ['k' => 'Reward Redemption', 'v' => isset($raw['price']['rewardPointDiscount']['discountAmount']) ? ('-' . $money(abs($raw['price']['rewardPointDiscount']['discountAmount']), $r->currency)) : '—'],
             ['k' => 'Delivery Charge',   'v' => $money($shipCharge, $r->currency)],
             ['k' => 'VAT',               'v' => $money($raw['price']['vat'] ?? null, $r->currency)],
-            ['k' => 'Total',             'v' => $money($raw['price']['total'] ?? $r->total_amount, $r->currency)],
+            ['k' => 'Total',             'v' => $money($raw['price']['customerPayable'] ?? null, $r->currency)],
         ];
 
         // --- addresses (from raw) ---
-        $shippingText = $addr(is_array($raw['receiver'] ?? null) ? $raw['receiver'] : null);
-        $billingText  = $addr(is_array($raw['billingAddress'] ?? null) ? $raw['billingAddress'] : null);
+//        $shippingText = $addr(is_array($raw['receiver'] ?? null) ? $raw['receiver'] : null);
+//        $billingText  = $addr(is_array($raw['billingAddress'] ?? null) ? $raw['billingAddress'] : null);
+
+        // ----- Address pairs (Shipping & Billing) -----
+        $ship = is_array($raw['receiver'] ?? null) ? $raw['receiver'] : [];
+        $bill = is_array($raw['billingAddress'] ?? null) ? $raw['billingAddress'] : [];
+
+        $toPairs = static function (array $a): array {
+            $get = static fn ($path) => data_get($a, $path);
+
+            return [
+                ['k' => 'Name',         'v' => (string) ($get('name') ?? '—')],
+                ['k' => 'Phone',        'v' => (string) ($get('phoneNumber') ?? '—')],
+//                ['k' => 'Label',        'v' => (string) ($get('addressLabel') ?? '—')],
+                ['k' => 'Address',      'v' => (string) ($get('address') ?? '—')],
+//                ['k' => 'Landmark',     'v' => (string) ($get('landmark') ?? '—')],
+                ['k' => 'Area',         'v' => (string) ($get('area.enName') ?? '—')],
+                ['k' => 'District',         'v' => (string) ($get('zone.enName') ?? '—')],
+            ];
+        };
+
+        $shipPairs = $toPairs($ship);
+        $billPairs = $toPairs($bill);
+
 
         // === layout: meta → (items | summary) → addresses (boxy, minimal) ===
         return $schema->components([
@@ -126,49 +154,99 @@ class OrderInfolist
                         TextEntry::make('m_env')->label('Env')->state($env)->badge()->columnSpan(1),
                         TextEntry::make('m_date')->label('Date')->state($dateText)->badge()->columnSpan(3),
                         TextEntry::make('m_payment')->label('Payment')->state($paymentText)->badge()->columnSpan(2),
-                        TextEntry::make('m_total')->label('Customer Payable')->state($payableText)->badge()->color('info')->columnSpan(2),
+                        TextEntry::make('m_total')->label('Customer Payable')->state($payableText)->badge()->columnSpan(2),
                     ]),
 
                     // items + summary
                     Grid::make(['default' => 1, 'lg' => 12])->schema([
                         // ITEMS (left)
-                        Section::make('Items')->compact()->columnSpan(8)->schema([
+                        Section::make('Items')->compact()->columnSpan(9)->schema([
                             // header
                             Grid::make(['default' => 12])->schema([
-                                TextEntry::make('h_prod')->hiddenLabel()->state('Product')->columnSpan(4),
+                                TextEntry::make('h_prod')->hiddenLabel()->state('Produc')->columnSpan(1)->alignCenter(),
 //                                TextEntry::make('h_model')->hiddenLabel()->state('Model')->columnSpan(2),
-                                TextEntry::make('h_plaza')->hiddenLabel()->state('Plaza')->columnSpan(2),
-                                TextEntry::make('h_qty')->hiddenLabel()->state('Qty')->columnSpan(1),
-//                                TextEntry::make('h_mrp')->hiddenLabel()->state('MRP')->columnSpan(1),
-//                                TextEntry::make('h_disc')->hiddenLabel()->state('Discount')->columnSpan(1),
-//                                TextEntry::make('h_tot')->hiddenLabel()->state('Total')->columnSpan(1),
+                                TextEntry::make('h_plaza')->hiddenLabel()->state('Plaza')->columnSpan(2)->alignCenter(),
+                                TextEntry::make('h_plaza_uid')->hiddenLabel()->state('Plaza Uid')->columnSpan(2)->alignCenter(),
+                                TextEntry::make('h_qty')->hiddenLabel()->state('Qty')->columnSpan(1)->alignCenter(),
+                                TextEntry::make('h_mrp')->hiddenLabel()->state('MRP')->columnSpan(2)->alignCenter(),
+                                TextEntry::make('h_disc')->hiddenLabel()->state('Discount')->columnSpan(2)->alignCenter(),
+                                TextEntry::make('h_tot')->hiddenLabel()->state('Total')->columnSpan(2)->alignCenter(),
                             ]),
                             // rows
                             RepeatableEntry::make('items')->hiddenLabel()->state($items)->columns(12)->schema([
-                                TextEntry::make('product')->hiddenLabel()->columnSpan(4)->wrap(),
+                                TextEntry::make('product')->hiddenLabel()->columnSpan(1)->color('gray')->alignCenter()->wrap()->limit(12)
+                                    ->tooltip(fn ($state) => $state)
+                                    ->extraAttributes([
+                                        'class' => 'whitespace-normal break-words',
+                                        'style' => 'max-width:28rem;',
+                                    ]),
 //                                TextEntry::make('model')->hiddenLabel()->columnSpan(2),
-                                TextEntry::make('plaza')->hiddenLabel()->columnSpan(2),
-                                TextEntry::make('qty')->hiddenLabel()->columnSpan(1),
-//                                TextEntry::make('mrp')->hiddenLabel()->columnSpan(1),
-//                                TextEntry::make('discount')->hiddenLabel()->columnSpan(1),
-//                                TextEntry::make('total')->hiddenLabel()->columnSpan(1),
+                                TextEntry::make('plaza')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap()->limit(12)
+                                    ->tooltip(fn ($state) => $state)
+                                    ->extraAttributes([
+                                        'class' => 'whitespace-normal break-words',
+                                        'style' => 'max-width:28rem;',
+                                    ]),
+                                TextEntry::make('plaza_uid')->hiddenLabel()->columnSpan(2)->copyable()->badge()->color('gray')->alignCenter()->wrap(),
+                                TextEntry::make('qty')->hiddenLabel()->columnSpan(1)->badge()->color('gray')->alignCenter()->wrap(),
+                                TextEntry::make('mrp')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
+                                TextEntry::make('discount')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
+                                TextEntry::make('total')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
                             ]),
                         ]),
 
                         // SUMMARY (right)
-                        Section::make('Order Summary')->compact()->columnSpan(4)->schema([
+                        Section::make('Order Summary')->compact()->columnSpan(3)->schema([
                             RepeatableEntry::make('summary')->hiddenLabel()->state($summary)->columns(12)->schema([
-                                TextEntry::make('k')->hiddenLabel()->columnSpan(7),
-                                TextEntry::make('v')->hiddenLabel()->columnSpan(5),
+                                TextEntry::make('k')->hiddenLabel()->columnSpan(5),
+                                TextEntry::make('v')->hiddenLabel()->columnSpan(5)->alignRight()->badge()->color('gray')->wrap()
+                                    ->tooltip(fn ($state) => $state)
+                                    ->extraAttributes([
+                                        'class' => 'whitespace-normal break-words',
+                                        'style' => 'max-width:28rem;',
+                                    ]),
                             ]),
                         ]),
                     ]),
 
                     // addresses
-                    Section::make('Addresses')->compact()->schema([
+                    Section::make('')->compact()->schema([
                         Grid::make(['default' => 1, 'lg' => 12])->schema([
-                            TextEntry::make('ship')->label('Shipping Address')->state($shippingText)->columnSpan(6),
-                            TextEntry::make('bill')->label('Billing Address')->state($billingText)->columnSpan(6),
+
+                            // Billing (left)
+                            Section::make('Billing Address')->compact()->columnSpan(6)->schema([
+                                RepeatableEntry::make('billing')
+                                    ->hiddenLabel()
+                                    ->state($billPairs)      // <-- preformatted pairs
+                                    ->columns(12)
+                                    ->schema([
+                                        TextEntry::make('k')->hiddenLabel()->columnSpan(2),
+                                        TextEntry::make('v')->hiddenLabel()->columnSpan(10)->alignRight()->copyable()->badge()->color('gray')->wrap()
+                                            ->tooltip(fn ($state) => $state)
+                                            ->extraAttributes([
+                                                'class' => 'whitespace-normal break-words',
+                                                'style' => 'max-width:28rem;',
+                                            ]),
+                                    ]),
+                            ]),
+                            // Shipping (right)
+                            Section::make('Shipping Address')->compact()->columnSpan(6)->schema([
+                                RepeatableEntry::make('shipping')
+                                    ->hiddenLabel()
+                                    ->state($shipPairs)      // <-- preformatted pairs
+                                    ->columns(12)
+                                    ->schema([
+                                        TextEntry::make('k')->hiddenLabel()->columnSpan(2),
+                                        TextEntry::make('v')->hiddenLabel()->columnSpan(10)->alignRight()->copyable()->badge()->color('gray')->wrap()
+                                            ->tooltip(fn ($state) => $state)
+                                            ->extraAttributes([
+                                                'class' => 'whitespace-normal break-words',
+                                                'style' => 'max-width:28rem;',
+                                            ]),
+                                    ]),
+                            ]),
+
+
                         ]),
                     ]),
                 ]),
