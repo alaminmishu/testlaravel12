@@ -27,6 +27,23 @@ class Order extends Model
         'total_amount' => 'decimal:2',
     ];
 
+    public function getPaymentTxnIdAttribute(): ?string
+    {
+        $raw = $this->raw;
+
+        if (is_array($raw)) {
+            return data_get($raw, 'payment.transactionId');
+        }
+
+        // Fallback if raw somehow stored as string
+        if (is_string($raw)) {
+            $arr = json_decode($raw, true);
+            return is_array($arr) ? data_get($arr, 'payment.transactionId') : null;
+        }
+
+        return null;
+    }
+
     // If later you add OrderItem:
     // public function items() { return $this->hasMany(OrderItem::class); }
 

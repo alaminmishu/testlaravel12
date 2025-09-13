@@ -67,8 +67,8 @@ class OrderInfolist
         };
         $dateText       = $fmt($r->created_at_external ?? ($raw['createdAt'] ?? null));
         $paymentText    = trim(($r->payment_method ?? ($raw['payment']['paymentGatewayCode'] ?? '—')) . (isset($r->payment_status) ? ' · ' . $r->payment_status : (isset($raw['payment']['status']) ? ' · ' . $raw['payment']['status'] : '')));
-        $paymentTxn    = trim(($r->payment_method ?? ($raw['payment']['transactionId'] ?? '—')));
-        $emiInfo    = trim(($r->payment_method ?? ($raw['payment']['emi']['bankName'] . ' - ' . $raw['payment']['emi']['cardType'] . ' - ' . $raw['payment']['emi']['month'] ?? '—')));
+        $paymentTxn    = trim(($raw['payment']['transactionId'] ?? '—'));
+        $emiInfo    = trim(($raw['payment']['emi']['bankName'] . ' - ' . $raw['payment']['emi']['cardType'] . ' - ' . $raw['payment']['emi']['month'] ?? '—'));
         $shippingMethod = (string) ($raw['shippingMethod'] ?? '—');
         $payableShown   = $raw['price']['customerPayable'] ?? '-';
         $payableText    = $money($payableShown, $r->currency);

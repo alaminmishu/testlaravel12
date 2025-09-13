@@ -13,6 +13,10 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Maatwebsite\Excel\Excel;
 
 class OrdersTable
 {
@@ -27,8 +31,9 @@ class OrdersTable
                 TextColumn::make('created_at'),
                 TextColumn::make('payment_method'),
                 TextColumn::make('payment_status'),
+                TextColumn::make('payment_txn_id'),
                 TextColumn::make('total_amount'),
-                TextColumn::make('customer_email'),
+//                TextColumn::make('customer_email'),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -69,13 +74,28 @@ class OrdersTable
                         return "Date: {$from} → {$until}";
                     }),
             ])
+            ->headerActions([
+                ExportAction::make('export')
+                    ->label('Export')
+                    ->exports([
+                        // Export the current table (respects search, filters, column visibility, sorting, and pagination scope)
+                        ExcelExport::make('orders-visible')
+                            ->fromTable()
+                            ->withFilename('orders-' . now()->format('d-m-Y_H-i'))
+                            ->withWriterType(Excel::XLSX)
+//                            ->askForFilename()   // let user rename
+//                            ->askForWriterType() // XLSX/CSV/TSV/ODS...
+//                         ->queue()         // uncomment for large exports (uses your queue/Horizon)
+                    ]),
+            ])
+
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
+//                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+//                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
