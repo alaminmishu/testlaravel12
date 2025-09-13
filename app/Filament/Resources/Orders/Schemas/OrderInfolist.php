@@ -79,8 +79,8 @@ class OrderInfolist
         foreach (array_slice($products, 0, 100) as $p) {
             $qty   = (int)  ($p['variant']['quantity'] ?? 1);
             $mrpN  = (float)($p['variant']['mrpPrice'] ?? 0);
-            $discN = (float)($p['discount']['calculatedDiscount'] ?? 0);
-            $lineN = ($qty * $mrpN) - abs($discN);
+//            $discN = (float)($p['discount']['calculatedDiscount'] ?? 0);
+//            $lineN = ($qty * $mrpN) - abs($discN);
 
             $items[] = [
                 'product'  => (string)($p['enName'] ?? '—'),
@@ -90,8 +90,8 @@ class OrderInfolist
                 'plaza_uid'    => (string)($p['seller']['uid'] ?? '—'),
                 'qty'      => (string) $qty,
                 'mrp'      => $money($mrpN, $r->currency),
-                'discount' => $discN ? ('-' . $money(abs($discN), $r->currency)) : '—',
-                'total'    => $money($lineN, $r->currency),
+//                'discount' => $discN ? ('-' . $money(abs($discN), $r->currency)) : '—',
+//                'total'    => $money($lineN, $r->currency),
             ];
         }
 
@@ -163,18 +163,18 @@ class OrderInfolist
                         Section::make('Items')->compact()->columnSpan(9)->schema([
                             // header
                             Grid::make(['default' => 12])->schema([
-                                TextEntry::make('h_prod')->hiddenLabel()->state('Produc')->columnSpan(1)->alignCenter(),
+                                TextEntry::make('h_prod')->hiddenLabel()->state('Product')->columnSpan(4)->alignCenter(),
 //                                TextEntry::make('h_model')->hiddenLabel()->state('Model')->columnSpan(2),
                                 TextEntry::make('h_plaza')->hiddenLabel()->state('Plaza')->columnSpan(2)->alignCenter(),
                                 TextEntry::make('h_plaza_uid')->hiddenLabel()->state('Plaza Uid')->columnSpan(2)->alignCenter(),
                                 TextEntry::make('h_qty')->hiddenLabel()->state('Qty')->columnSpan(1)->alignCenter(),
                                 TextEntry::make('h_mrp')->hiddenLabel()->state('MRP')->columnSpan(2)->alignCenter(),
-                                TextEntry::make('h_disc')->hiddenLabel()->state('Discount')->columnSpan(2)->alignCenter(),
-                                TextEntry::make('h_tot')->hiddenLabel()->state('Total')->columnSpan(2)->alignCenter(),
+//                                TextEntry::make('h_disc')->hiddenLabel()->state('Discount')->columnSpan(2)->alignCenter(),
+//                                TextEntry::make('h_tot')->hiddenLabel()->state('Total')->columnSpan(2)->alignCenter(),
                             ]),
                             // rows
                             RepeatableEntry::make('items')->hiddenLabel()->state($items)->columns(12)->schema([
-                                TextEntry::make('product')->hiddenLabel()->columnSpan(1)->color('gray')->alignCenter()->wrap()->limit(12)
+                                TextEntry::make('product')->hiddenLabel()->columnSpan(4)->color('gray')->alignCenter()->wrap()->limit(30)
                                     ->tooltip(fn ($state) => $state)
                                     ->extraAttributes([
                                         'class' => 'whitespace-normal break-words',
@@ -190,8 +190,8 @@ class OrderInfolist
                                 TextEntry::make('plaza_uid')->hiddenLabel()->columnSpan(2)->copyable()->badge()->color('gray')->alignCenter()->wrap(),
                                 TextEntry::make('qty')->hiddenLabel()->columnSpan(1)->badge()->color('gray')->alignCenter()->wrap(),
                                 TextEntry::make('mrp')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
-                                TextEntry::make('discount')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
-                                TextEntry::make('total')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
+//                                TextEntry::make('discount')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
+//                                TextEntry::make('total')->hiddenLabel()->columnSpan(2)->badge()->color('gray')->alignCenter()->wrap(),
                             ]),
                         ]),
 

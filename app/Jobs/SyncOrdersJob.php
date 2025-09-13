@@ -181,7 +181,7 @@ class SyncOrdersJob implements ShouldQueue
                     ['uid' => $node['uid'], 'environment' => $this->env],
                     [
                         'status' => $node['status'] ?? null,
-                        'payment_method' => data_get($node, 'payment.type'),
+                        'payment_method' => data_get($node, 'payment.paymentGatewayCode'),
                         'payment_status' => data_get($node, 'payment.status'),
                         'created_at_external' => data_get($node, 'createdAt'),
                         'updated_at_external' => data_get($node, 'updatedAt'),
