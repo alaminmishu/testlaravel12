@@ -9,6 +9,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,6 +35,22 @@ class OrdersTable
                 TextColumn::make('payment_txn_id'),
                 TextColumn::make('total_amount'),
 //                TextColumn::make('customer_email'),
+            ])
+            ->groups([
+                // Group by ORDER DATE (by day, ignoring time)
+                Group::make('created_at_external')
+                    ->label('Order date')
+                    // Use the date (Y-m-d) as the grouping key so all orders from same day are together
+                    ->getKeyFromRecordUsing(fn ($record) =>
+                    optional($record->created_at_external)->toDateString()
+                    )
+                    // Human-friendly group title (e.g., "Sep 13, 2024")
+                    ->getTitleFromRecordUsing(fn ($record) =>
+                    optional($record->created_at_external)
+                        ? Carbon::parse($record->created_at_external)->format('M j, Y')
+                        : '—'
+                    )
+                    ->collapsible(),
             ])
             ->filters([
                 SelectFilter::make('status')
