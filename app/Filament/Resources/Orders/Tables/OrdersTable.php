@@ -115,5 +115,6 @@ class OrdersTable
 //                    DeleteBulkAction::make(),
                 ]),
             ]);
+
     }
 }

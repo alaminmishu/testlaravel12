@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -41,6 +42,14 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
+                \App\Filament\Widgets\RevenueStats::class,
+                \App\Filament\Widgets\RevenuePerMonthChart::class,
+                \App\Filament\Widgets\OrdersPerMonthChart::class,
+                \App\Filament\Widgets\TotalCustomersChart::class,
+                \App\Filament\Widgets\OrdersStatusDonut::class,
+            ])
+            ->plugins([
+                FilamentApexChartsPlugin::make(),
             ])
             ->middleware([
                 EncryptCookies::class,
