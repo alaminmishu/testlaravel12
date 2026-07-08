@@ -28,7 +28,7 @@ class SyncOrdersFromMongoCommand extends Command
      */
     protected $description = 'Sync orders directly from the configured MongoDB orders collection into the reporting database';
 
-    protected const WATERMARK_KEY = 'mongo_orders_last_synced_at';
+    public const WATERMARK_KEY = 'mongo_orders_last_synced_at';
 
     public function handle(OrderDocumentMapper $mapper): int
     {
