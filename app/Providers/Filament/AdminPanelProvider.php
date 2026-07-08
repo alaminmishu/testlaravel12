@@ -47,6 +47,10 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\OrdersPerMonthChart::class,
                 \App\Filament\Widgets\TotalCustomersChart::class,
                 \App\Filament\Widgets\OrdersStatusDonut::class,
+                \App\Filament\Widgets\TopProductsChart::class,
+                \App\Filament\Widgets\TopCategoriesChart::class,
+                \App\Filament\Widgets\TopSellersChart::class,
+                \App\Filament\Widgets\RevenueByZoneChart::class,
             ])
             ->plugins([
                 FilamentApexChartsPlugin::make(),

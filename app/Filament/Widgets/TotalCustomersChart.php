@@ -2,32 +2,45 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Order;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class TotalCustomersChart extends ApexChartWidget
 {
-    /**
-     * Chart Id
-     *
-     * @var string
-     */
     protected static ?string $chartId = 'totalCustomersChart';
 
-    /**
-     * Widget Title
-     *
-     * @var string|null
-     */
-    protected static ?string $heading = 'TotalCustomersChart';
+    protected static ?string $heading = 'Active Customers (last 12 months)';
 
-    /**
-     * Chart options (series, labels, types, size, animations...)
-     * https://apexcharts.com/docs/options
-     *
-     * @return array
-     */
     protected function getOptions(): array
     {
+        $endOfThisMonth = Carbon::now()->startOfMonth()->endOfMonth();
+        $startOfWindow = $endOfThisMonth->copy()->subMonths(11)->startOfMonth();
+
+        $period = CarbonPeriod::create($startOfWindow, '1 month', $endOfThisMonth);
+        $labels = [];
+        $countsByMonth = [];
+        foreach ($period as $m) {
+            $key = $m->format('Y-m');
+            $labels[] = $m->format('M');
+            $countsByMonth[$key] = 0;
+        }
+
+        $rows = Order::query()
+            ->fromMongo()
+            ->whereNotNull('customer_email')
+            ->whereBetween('created_at_external', [$startOfWindow, $endOfThisMonth])
+            ->selectRaw("DATE_FORMAT(created_at_external, '%Y-%m') as ym, COUNT(DISTINCT customer_email) as total")
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        foreach ($rows as $ym => $total) {
+            if (array_key_exists($ym, $countsByMonth)) {
+                $countsByMonth[$ym] = (int) $total;
+            }
+        }
+
         return [
             'chart' => [
                 'type' => 'line',
@@ -35,12 +48,12 @@ class TotalCustomersChart extends ApexChartWidget
             ],
             'series' => [
                 [
-                    'name' => 'TotalCustomersChart',
-                    'data' => [2, 4, 6, 10, 14, 7, 2, 9, 10, 15, 13, 18],
+                    'name' => 'Active Customers',
+                    'data' => array_values($countsByMonth),
                 ],
             ],
             'xaxis' => [
-                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'categories' => $labels,
                 'labels' => [
                     'style' => [
                         'fontFamily' => 'inherit',

@@ -13,6 +13,11 @@ use_dns_when_possible: true
 composer_version: "2"
 web_environment: []
 corepack_enable: false
+web_extra_exposed_ports:
+    - name: node-vite
+      container_port: 5173
+      http_port: 5172
+      https_port: 5173
 
 # Key features of DDEV's config.yaml:
 
@@ -38,9 +43,9 @@ corepack_enable: false
 # database:
 #   type: <dbtype> # mysql, mariadb, postgres
 #   version: <version> # database version, like "10.11" or "8.0"
-#   MariaDB versions can be 5.5-10.8, 10.11, and 11.4.
-#   MySQL versions can be 5.5-8.0.
-#   PostgreSQL versions can be 9-17.
+#   MariaDB versions can be 5.5-10.8, 10.11, 11.4, 11.8
+#   MySQL versions can be 5.5-8.0, 8.4
+#   PostgreSQL versions can be 9-17
 
 # router_http_port: <port>  # Port to be used for http (defaults to global configuration, usually 80)
 # router_https_port: <port> # Port for https (defaults to global configuration, usually 443)
@@ -215,7 +220,7 @@ corepack_enable: false
 
 # ngrok_args: --basic-auth username:pass1234
 # Provide extra flags to the "ngrok http" command, see
-# https://ngrok.com/docs/ngrok-agent/config or run "ngrok http -h"
+# https://ngrok.com/docs/agent/config/v3/#agent-configuration or run "ngrok http -h"
 
 # disable_settings_management: false
 # If true, DDEV will not create CMS-specific settings files like
@@ -260,11 +265,11 @@ corepack_enable: false
 # using web_extra_daemons.
 # For example, with a web app on port 3000 inside the container, this config would
 # expose that web app on https://<project>.ddev.site:9999 and http://<project>.ddev.site:9998
-web_extra_exposed_ports:
- - name: node-vite
-   container_port: 5173
-   http_port: 5172
-   https_port: 5173
+# web_extra_exposed_ports:
+#  - name: myapp
+#    container_port: 3000
+#    http_port: 9998
+#    https_port: 9999
 
 #web_extra_daemons:
 #- name: "http-1"

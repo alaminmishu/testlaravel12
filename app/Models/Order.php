@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
+    use HasFactory;
+
+    public const ENVIRONMENT_MONGO = 'mongo';
+
     protected $fillable = [
         'uid',
         'environment',
@@ -17,6 +23,16 @@ class Order extends Model
         'currency',
         'total_amount',
         'customer_email',
+        'platform_type',
+        'device_platform_type',
+        'area_uid',
+        'area_name',
+        'zone_uid',
+        'zone_name',
+        'division_uid',
+        'division_name',
+        'promo_code',
+        'promo_discount_amount',
         'raw',
     ];
 
@@ -25,6 +41,7 @@ class Order extends Model
         'updated_at_external' => 'datetime',
         'raw' => 'array',
         'total_amount' => 'decimal:2',
+        'promo_discount_amount' => 'decimal:2',
     ];
 
     public function getPaymentTxnIdAttribute(): ?string
@@ -38,14 +55,17 @@ class Order extends Model
         // Fallback if raw somehow stored as string
         if (is_string($raw)) {
             $arr = json_decode($raw, true);
+
             return is_array($arr) ? data_get($arr, 'payment.transactionId') : null;
         }
 
         return null;
     }
 
-    // If later you add OrderItem:
-    // public function items() { return $this->hasMany(OrderItem::class); }
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 
     // Handy scopes (optional — great for Filament filters)
     public function scopeStatus($q, ?string $status)
@@ -62,13 +82,18 @@ class Order extends Model
     {
         return $q
             ->when($from, fn ($qq) => $qq->where('created_at_external', '>=', $from))
-            ->when($to,   fn ($qq) => $qq->where('created_at_external', '<=', $to));
+            ->when($to, fn ($qq) => $qq->where('created_at_external', '<=', $to));
     }
 
     public function scopeUpdatedBetween($q, ?string $from, ?string $to)
     {
         return $q
             ->when($from, fn ($qq) => $qq->where('updated_at_external', '>=', $from))
-            ->when($to,   fn ($qq) => $qq->where('updated_at_external', '<=', $to));
+            ->when($to, fn ($qq) => $qq->where('updated_at_external', '<=', $to));
+    }
+
+    public function scopeFromMongo($q)
+    {
+        return $q->where('environment', self::ENVIRONMENT_MONGO);
     }
 }

@@ -2,39 +2,31 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Order;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
 class OrdersStatusDonut extends ApexChartWidget
 {
-    /**
-     * Chart Id
-     *
-     * @var string
-     */
     protected static ?string $chartId = 'ordersStatusDonut';
 
-    /**
-     * Widget Title
-     *
-     * @var string|null
-     */
-    protected static ?string $heading = 'OrdersStatusDonut';
+    protected static ?string $heading = 'Orders by Status';
 
-    /**
-     * Chart options (series, labels, types, size, animations...)
-     * https://apexcharts.com/docs/options
-     *
-     * @return array
-     */
     protected function getOptions(): array
     {
+        $counts = Order::query()
+            ->fromMongo()
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->orderByDesc('total')
+            ->pluck('total', 'status');
+
         return [
             'chart' => [
                 'type' => 'donut',
                 'height' => 300,
             ],
-            'series' => [2, 4, 6, 10, 14],
-            'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+            'series' => array_values($counts->toArray()),
+            'labels' => array_map(fn (?string $status): string => $status ?? 'Unknown', $counts->keys()->toArray()),
             'legend' => [
                 'labels' => [
                     'fontFamily' => 'inherit',
