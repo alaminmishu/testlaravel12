@@ -48,6 +48,9 @@ class OrderDocumentMapper
             'division_name' => data_get($document, 'receiver.division.enName'),
             'promo_code' => data_get($document, 'promocodeDetails.code'),
             'promo_discount_amount' => data_get($document, 'promocodeDetails.discount'),
+            'pos_sync_id' => data_get($document, 'posSyncId'),
+            'is_pos_synced' => (bool) data_get($document, 'isPosSync', false),
+            'is_phone_order' => (bool) data_get($document, 'isPhoneOrder', false),
             'raw' => $document,
         ];
     }

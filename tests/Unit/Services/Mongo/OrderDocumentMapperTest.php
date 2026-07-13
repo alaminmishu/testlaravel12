@@ -21,6 +21,9 @@ class OrderDocumentMapperTest extends TestCase
             'status' => 'PROCESSING',
             'platformType' => 'B2C',
             'devicePlatformType' => 'WEB',
+            'posSyncId' => '20260430241389140',
+            'isPosSync' => true,
+            'isPhoneOrder' => false,
             'customer' => [
                 'contact' => ['email' => 'famina@example.com'],
             ],
@@ -75,6 +78,9 @@ class OrderDocumentMapperTest extends TestCase
         $this->assertSame('SAVE10', $mapped['order']['promo_code']);
         $this->assertSame(10, $mapped['order']['promo_discount_amount']);
         $this->assertSame('2023-05-31 11:31:11', $mapped['order']['created_at_external']);
+        $this->assertSame('20260430241389140', $mapped['order']['pos_sync_id']);
+        $this->assertTrue($mapped['order']['is_pos_synced']);
+        $this->assertFalse($mapped['order']['is_phone_order']);
     }
 
     public function test_it_maps_line_items(): void
@@ -101,5 +107,17 @@ class OrderDocumentMapperTest extends TestCase
         $mapped = (new OrderDocumentMapper)->map($document);
 
         $this->assertSame([], $mapped['items']);
+    }
+
+    public function test_it_defaults_pos_sync_and_phone_order_flags_to_false_when_absent(): void
+    {
+        $document = $this->orderDocument();
+        unset($document['posSyncId'], $document['isPosSync'], $document['isPhoneOrder']);
+
+        $mapped = (new OrderDocumentMapper)->map($document);
+
+        $this->assertNull($mapped['order']['pos_sync_id']);
+        $this->assertFalse($mapped['order']['is_pos_synced']);
+        $this->assertFalse($mapped['order']['is_phone_order']);
     }
 }

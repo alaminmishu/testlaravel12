@@ -33,6 +33,9 @@ class Order extends Model
         'division_name',
         'promo_code',
         'promo_discount_amount',
+        'pos_sync_id',
+        'is_pos_synced',
+        'is_phone_order',
         'raw',
     ];
 
@@ -42,6 +45,8 @@ class Order extends Model
         'raw' => 'array',
         'total_amount' => 'decimal:2',
         'promo_discount_amount' => 'decimal:2',
+        'is_pos_synced' => 'boolean',
+        'is_phone_order' => 'boolean',
     ];
 
     public function getPaymentTxnIdAttribute(): ?string

@@ -6,14 +6,17 @@ use App\Models\Order;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\BooleanConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\DateConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\NumberConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
 use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -162,6 +165,17 @@ class OrdersTable
                 TextColumn::make('promo_code')
                     ->label('Promo Code')
                     ->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('is_pos_synced')
+                    ->label('POS Synced')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('is_phone_order')
+                    ->label('Phone Order')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('pos_sync_id')
+                    ->label('POS Sync ID')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at_external')
                     ->label('Last Updated')
                     ->dateTime()
@@ -195,6 +209,18 @@ class OrdersTable
                     ->multiple()
                     ->options(self::paymentMethodOptions())
                     ->indicateUsing(fn (array $data): ?string => ! empty($data['values']) ? 'Payment method: '.implode(', ', (array) $data['values']) : null),
+
+                TernaryFilter::make('is_pos_synced')
+                    ->label('POS Sync')
+                    ->trueLabel('Synced')
+                    ->falseLabel('Not synced')
+                    ->placeholder('All orders'),
+
+                TernaryFilter::make('is_phone_order')
+                    ->label('Order Type')
+                    ->trueLabel('Phone / manual order')
+                    ->falseLabel('Regular order')
+                    ->placeholder('All orders'),
 
                 Filter::make('created_between')
                     ->form([
@@ -254,6 +280,12 @@ class OrdersTable
                             ->label('Customer Email'),
                         TextConstraint::make('promo_code')
                             ->label('Promo Code'),
+                        TextConstraint::make('pos_sync_id')
+                            ->label('POS Sync ID'),
+                        BooleanConstraint::make('is_pos_synced')
+                            ->label('POS Synced'),
+                        BooleanConstraint::make('is_phone_order')
+                            ->label('Phone Order'),
                         DateConstraint::make('created_at_external')
                             ->label('Order Date'),
                     ]),
